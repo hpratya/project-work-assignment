@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -70,6 +71,18 @@ export default async function AdminPage() {
                   >
                     {member.role}
                   </span>
+
+                  <Link
+                    href={`/admin/members/${member.id}`}
+                    aria-label={`Edit ${member.full_name ?? member.email ?? "member"}`}
+                    title="Edit display name"
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                      "shrink-0"
+                    )}
+                  >
+                    <Pencil />
+                  </Link>
                 </li>
               ))}
             </ul>

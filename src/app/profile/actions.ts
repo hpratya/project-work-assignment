@@ -33,10 +33,16 @@ export async function updateFullName(
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login?next=/profile");
+  if (!user) redirect("/login");
 
-  // RLS restricts this to the caller's own row, and the column grant means
-  // only full_name can be written even if this filter were wrong.
+  // Whose row to edit. This arrives from a form field, so it is attacker
+  // controlled — it is safe only because the update policies below allow the
+  // caller's own row or, for an admin, any row. A user passing someone
+  // else's id gets zero rows back, not a write.
+  const targetId = String(formData.get("user_id") ?? "").trim() || user.id;
+
+  // RLS restricts which row can be written, and the column grant means only
+  // full_name can be written even if this filter were wrong.
   //
   // Selecting the row back matters: when a policy filters an update out, the
   // API reports no error and zero rows touched, which would otherwise look
@@ -44,7 +50,7 @@ export async function updateFullName(
   const { data, error } = await supabase
     .from("profiles")
     .update({ full_name: name })
-    .eq("id", user.id)
+    .eq("id", targetId)
     .select("id");
 
   if (error) {
@@ -54,10 +60,11 @@ export async function updateFullName(
 
   if (!data || data.length === 0) {
     console.error(
-      "[profile] Update matched no rows — the update policy or the grant on " +
-        "profiles.full_name is probably missing. Run the latest migration."
+      `[profile] Update of ${targetId} by ${user.id} matched no rows — either ` +
+        "the caller isn't allowed to edit that row, or the update policy or " +
+        "the grant on profiles.full_name is missing."
     );
-    return { status: "error", message: "Couldn't save your name. Try again." };
+    return { status: "error", message: "Couldn't save the name. Try again." };
   }
 
   // The header on every page shows this name too.

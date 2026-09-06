@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { updateFullName, type UpdateNameState } from "./actions";
 
 const initialState: UpdateNameState = { status: "idle" };
@@ -17,7 +18,14 @@ function SaveButton() {
   );
 }
 
-export function EditNameForm({ defaultName }: { defaultName: string }) {
+export function EditNameForm({
+  defaultName,
+  userId,
+}: {
+  defaultName: string;
+  /** Omit to edit your own name. Admins pass a member's id. */
+  userId?: string;
+}) {
   const [state, formAction] = useActionState(updateFullName, initialState);
 
   return (
@@ -25,6 +33,10 @@ export function EditNameForm({ defaultName }: { defaultName: string }) {
       <label htmlFor="full_name" className="text-sm font-medium">
         Display name
       </label>
+
+      {/* Not a security boundary — the row this may write is decided by the
+          update policies on profiles, not by this field. */}
+      {userId && <input type="hidden" name="user_id" value={userId} />}
 
       <div className="flex gap-2">
         <Input
@@ -41,13 +53,16 @@ export function EditNameForm({ defaultName }: { defaultName: string }) {
       {state.status !== "idle" && state.message && (
         <p
           role="status"
-          className={
+          className={cn(
+            "rounded-md px-3 py-2 text-sm font-medium",
             state.status === "error"
-              ? "text-sm text-destructive"
-              : "text-sm text-muted-foreground"
-          }
+              ? "bg-destructive/10 text-destructive"
+              : // Explicit greens rather than a theme token: the palette has
+                // no success colour, and these stay legible in both themes.
+                "bg-green-500/10 text-green-700 dark:text-green-400"
+          )}
         >
-          {state.message}
+          {state.status === "success" ? `✓ ${state.message}` : state.message}
         </p>
       )}
     </form>
