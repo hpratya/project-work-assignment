@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <>
       <header className="border-b">
@@ -12,9 +18,25 @@ export default function Home() {
             <Link href="/health" className="text-sm text-muted-foreground hover:text-foreground">
               Health check
             </Link>
-            <Link href="/login" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-              Sign in
-            </Link>
+            {user ? (
+              <>
+                <span className="hidden text-sm text-muted-foreground sm:inline">
+                  {user.email}
+                </span>
+                <form action="/auth/signout" method="post">
+                  <Button type="submit" variant="outline" size="sm">
+                    Sign out
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                Sign in
+              </Link>
+            )}
           </nav>
         </div>
       </header>

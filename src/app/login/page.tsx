@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -7,71 +8,51 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/server";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: PageProps<"/login">) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/");
+  }
+
+  const { error } = await searchParams;
+
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 sm:py-16">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Sign in</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account.
+            Use your Google account to access your account.
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          {/* UI only — no submit handler wired up yet. */}
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
-            </div>
+        <CardContent className="space-y-4">
+          {typeof error === "string" && error && (
+            <p
+              role="alert"
+              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              {error}
+            </p>
+          )}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
-                <Link
-                  href="#"
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
-            </div>
-
-            <Button type="submit" size="lg" className="w-full">
-              Sign in
-            </Button>
-          </form>
+          <GoogleSignInButton />
         </CardContent>
 
-        <CardFooter className="flex-col gap-3 text-center text-sm text-muted-foreground">
-          <p>
-            Don&apos;t have an account?{" "}
-            <Link href="#" className="font-medium text-foreground hover:underline">
-              Sign up
-            </Link>
-          </p>
-          <Link href="/" className="text-xs hover:text-foreground">
+        <CardFooter className="justify-center">
+          <Link
+            href="/"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
             Back to home
           </Link>
         </CardFooter>
