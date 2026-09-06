@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,12 +13,14 @@ function shortName(fullName: string | null, email: string | null) {
 export function SignOutButton({
   fullName = null,
   email = null,
+  avatarUrl = null,
   size = "sm",
   fullWidth = false,
   className,
 }: {
   fullName?: string | null;
   email?: string | null;
+  avatarUrl?: string | null;
   size?: "sm" | "default";
   fullWidth?: boolean;
   className?: string;
@@ -35,13 +39,21 @@ export function SignOutButton({
         size={size}
         className={cn(fullWidth && "w-full")}
       >
+        {avatarUrl && (
+          <Image
+            src={avatarUrl}
+            alt=""
+            width={20}
+            height={20}
+            className="size-5 shrink-0 rounded-full object-cover"
+          />
+        )}
         {name && (
           // Dropped on the narrowest screens so the header doesn't wrap.
-          <span className="hidden max-w-[12ch] truncate sm:inline">
-            {name} ·
-          </span>
+          <span className="hidden max-w-[12ch] truncate sm:inline">{name}</span>
         )}
         <span>Sign out</span>
+        <LogOut />
       </Button>
     </form>
   );

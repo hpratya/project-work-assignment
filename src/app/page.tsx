@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getProfile } from "@/lib/supabase/profile";
@@ -35,6 +36,7 @@ export default async function Home() {
                 <SignOutButton
                   fullName={profile.full_name}
                   email={profile.email}
+                  avatarUrl={profile.avatar_url}
                 />
               </>
             ) : (
@@ -42,6 +44,7 @@ export default async function Home() {
                 href="/login"
                 className={cn(buttonVariants({ size: "sm" }))}
               >
+                <LogIn />
                 Sign in
               </Link>
             )}
