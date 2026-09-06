@@ -11,6 +11,20 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
+/**
+ * Messages for the codes /auth/callback can redirect with.
+ *
+ * Deliberately a fixed map: rendering ?error= verbatim would let anyone put
+ * their own text ("your account is locked, call 02-…") on a trusted domain.
+ */
+const ERROR_MESSAGES: Record<string, string> = {
+  oauth_denied: "Sign-in was cancelled. Please try again.",
+  missing_code: "That sign-in link is incomplete. Please try again.",
+  sign_in_failed: "We couldn't complete sign-in. Please try again.",
+};
+
+const GENERIC_ERROR = "Something went wrong signing in. Please try again.";
+
 export default async function LoginPage({
   searchParams,
 }: PageProps<"/login">) {
@@ -27,6 +41,11 @@ export default async function LoginPage({
       ? next
       : undefined;
 
+  const errorMessage =
+    typeof error === "string" && error
+      ? (ERROR_MESSAGES[error] ?? GENERIC_ERROR)
+      : null;
+
   if (user) {
     redirect(safeNext ?? "/");
   }
@@ -42,12 +61,12 @@ export default async function LoginPage({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {typeof error === "string" && error && (
+          {errorMessage && (
             <p
               role="alert"
               className="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
             >
-              {error}
+              {errorMessage}
             </p>
           )}
 

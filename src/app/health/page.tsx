@@ -29,6 +29,15 @@ export default async function HealthPage() {
     message = err instanceof Error ? err.message : String(err);
   }
 
+  // This page is public, and the message can carry schema or permission
+  // details. Log it for us, show it only while developing.
+  if (message) {
+    console.error(`[health] Supabase check failed: ${message}`);
+    if (process.env.NODE_ENV !== "development") {
+      message = "See the server logs for details.";
+    }
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
       <Card className="w-full max-w-md">

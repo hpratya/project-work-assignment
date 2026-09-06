@@ -1,27 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { publicOrigin } from "@/lib/public-origin";
 
 /**
- * The origin the browser actually used.
+ * Redirects to the login page with a fixed error code.
  *
- * Behind a load balancer (Vercel included) `request.url` carries the internal
- * deployment host, not the domain the user is on. Redirecting to that host
- * would land the user on a different origin than the one the session cookies
- * were just written for, so they'd arrive back looking signed out.
+ * The code names one of the messages hard-coded in the login page. Provider
+ * and database messages are logged rather than reflected, so an attacker
+ * can't use ?error= to render their own text on a trusted domain.
  */
-function publicOrigin(request: NextRequest, fallback: string) {
-  if (process.env.NODE_ENV === "development") return fallback;
-
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (!forwardedHost) return fallback;
-
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${forwardedHost}`;
+function loginError(
+  origin: string,
+  code: "oauth_denied" | "missing_code" | "sign_in_failed",
+  detail: string
+) {
+  console.error(`[auth/callback] ${code}: ${detail}`);
+  return NextResponse.redirect(`${origin}/login?error=${code}`);
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin: rawOrigin } = new URL(request.url);
-  const origin = publicOrigin(request, rawOrigin);
+  const { searchParams } = new URL(request.url);
+  const origin = publicOrigin(request);
   const code = searchParams.get("code");
 
   // Where to send the user once they're signed in. Only relative paths are
@@ -34,26 +33,21 @@ export async function GET(request: NextRequest) {
 
   // Google can redirect back with an error instead of a code
   // (e.g. the user cancelled the consent screen).
-  const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
+  const oauthError =
+    searchParams.get("error_description") ?? searchParams.get("error");
   if (oauthError) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(oauthError)}`
-    );
+    return loginError(origin, "oauth_denied", oauthError);
   }
 
   if (!code) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent("Missing authorization code.")}`
-    );
+    return loginError(origin, "missing_code", "no code in callback URL");
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message)}`
-    );
+    return loginError(origin, "sign_in_failed", error.message);
   }
 
   // TODO(org-restriction): this is the place to enforce an allowed email
