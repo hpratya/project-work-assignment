@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { publicOrigin } from "@/lib/public-origin";
+import { isEmailAllowed } from "@/lib/allowed-domains";
 
 /**
  * Redirects to the login page with a fixed error code.
@@ -11,7 +12,7 @@ import { publicOrigin } from "@/lib/public-origin";
  */
 function loginError(
   origin: string,
-  code: "oauth_denied" | "missing_code" | "sign_in_failed",
+  code: "oauth_denied" | "missing_code" | "sign_in_failed" | "domain_not_allowed",
   detail: string
 ) {
   console.error(`[auth/callback] ${code}: ${detail}`);
@@ -44,16 +45,24 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return loginError(origin, "sign_in_failed", error.message);
   }
 
-  // TODO(org-restriction): this is the place to enforce an allowed email
-  // domain. Read the signed-in user, and if their email is outside the
-  // allowed domain, call `supabase.auth.signOut()` and redirect back to
-  // /login with an error, so the check cannot be bypassed from the client.
+  // Enforced here rather than with Google's `hd` parameter, which only
+  // filters the account picker and can be dropped by anyone driving the
+  // flow by hand. No-op until ALLOWED_EMAIL_DOMAINS is set.
+  const email = data.user?.email;
+  if (!isEmailAllowed(email)) {
+    await supabase.auth.signOut();
+    return loginError(
+      origin,
+      "domain_not_allowed",
+      `rejected sign-in from ${email ?? "an account with no email"}`
+    );
+  }
 
   return NextResponse.redirect(`${origin}${next}`);
 }

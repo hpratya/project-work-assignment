@@ -21,6 +21,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   oauth_denied: "Sign-in was cancelled. Please try again.",
   missing_code: "That sign-in link is incomplete. Please try again.",
   sign_in_failed: "We couldn't complete sign-in. Please try again.",
+  domain_not_allowed:
+    "That account isn't allowed to sign in here. Please use your work account.",
 };
 
 const GENERIC_ERROR = "Something went wrong signing in. Please try again.";

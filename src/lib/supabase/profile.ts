@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isEmailAllowed } from "@/lib/allowed-domains";
 
 export type UserRole = "user" | "admin";
 
@@ -26,6 +27,11 @@ export async function getProfile(): Promise<Profile | null> {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  // Also checked here, not just at sign-in, so that turning the restriction
+  // on immediately cuts off sessions issued before it existed rather than
+  // waiting for them to expire.
+  if (!isEmailAllowed(user.email)) return null;
 
   const { data, error } = await supabase
     .from("profiles")
