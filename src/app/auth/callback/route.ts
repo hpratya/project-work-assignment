@@ -1,8 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * The origin the browser actually used.
+ *
+ * Behind a load balancer (Vercel included) `request.url` carries the internal
+ * deployment host, not the domain the user is on. Redirecting to that host
+ * would land the user on a different origin than the one the session cookies
+ * were just written for, so they'd arrive back looking signed out.
+ */
+function publicOrigin(request: NextRequest, fallback: string) {
+  if (process.env.NODE_ENV === "development") return fallback;
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  if (!forwardedHost) return fallback;
+
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${forwardedHost}`;
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams, origin: rawOrigin } = new URL(request.url);
+  const origin = publicOrigin(request, rawOrigin);
   const code = searchParams.get("code");
 
   // Where to send the user once they're signed in. Only relative paths are
