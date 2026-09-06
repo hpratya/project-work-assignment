@@ -37,13 +37,26 @@ export async function updateFullName(
 
   // RLS restricts this to the caller's own row, and the column grant means
   // only full_name can be written even if this filter were wrong.
-  const { error } = await supabase
+  //
+  // Selecting the row back matters: when a policy filters an update out, the
+  // API reports no error and zero rows touched, which would otherwise look
+  // exactly like a successful save.
+  const { data, error } = await supabase
     .from("profiles")
     .update({ full_name: name })
-    .eq("id", user.id);
+    .eq("id", user.id)
+    .select("id");
 
   if (error) {
     console.error(`[profile] Failed to update name: ${error.message}`);
+    return { status: "error", message: "Couldn't save your name. Try again." };
+  }
+
+  if (!data || data.length === 0) {
+    console.error(
+      "[profile] Update matched no rows — the update policy or the grant on " +
+        "profiles.full_name is probably missing. Run the latest migration."
+    );
     return { status: "error", message: "Couldn't save your name. Try again." };
   }
 
