@@ -19,11 +19,17 @@ export default async function LoginPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect("/");
-  }
+  const { error, next } = await searchParams;
 
-  const { error } = await searchParams;
+  // Only allow relative paths, so `next` can't be used as an open redirect.
+  const safeNext =
+    typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : undefined;
+
+  if (user) {
+    redirect(safeNext ?? "/");
+  }
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 sm:py-16">
@@ -45,7 +51,7 @@ export default async function LoginPage({
             </p>
           )}
 
-          <GoogleSignInButton />
+          <GoogleSignInButton next={safeNext} />
         </CardContent>
 
         <CardFooter className="justify-center">

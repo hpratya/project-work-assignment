@@ -5,8 +5,13 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
 
-  // Where to send the user once they're signed in.
-  const next = searchParams.get("next") ?? "/";
+  // Where to send the user once they're signed in. Only relative paths are
+  // accepted, so this can't be turned into an open redirect.
+  const requestedNext = searchParams.get("next");
+  const next =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/";
 
   // Google can redirect back with an error instead of a code
   // (e.g. the user cancelled the consent screen).

@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/supabase/profile";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const profile = await getProfile();
 
   return (
     <>
@@ -18,11 +15,22 @@ export default async function Home() {
             <Link href="/health" className="text-sm text-muted-foreground hover:text-foreground">
               Health check
             </Link>
-            {user ? (
+            {profile ? (
               <>
-                <span className="hidden text-sm text-muted-foreground sm:inline">
-                  {user.email}
-                </span>
+                {profile.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Admin
+                  </Link>
+                )}
+                <Link
+                  href="/profile"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Profile
+                </Link>
                 <form action="/auth/signout" method="post">
                   <Button type="submit" variant="outline" size="sm">
                     Sign out

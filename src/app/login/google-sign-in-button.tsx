@@ -27,7 +27,7 @@ function GoogleLogo() {
   );
 }
 
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ next }: { next?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,11 +35,14 @@ export function GoogleSignInButton() {
     setLoading(true);
     setError(null);
 
+    const callback = new URL("/auth/callback", window.location.origin);
+    if (next) callback.searchParams.set("next", next);
+
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callback.toString(),
         // To restrict sign-in to a single Google Workspace domain later,
         // add `queryParams: { hd: "your-company.com" }` here. Note that `hd`
         // is only a UI hint — the authoritative check belongs server-side in
