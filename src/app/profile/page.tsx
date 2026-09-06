@@ -11,6 +11,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/lib/supabase/profile";
 import { SignOutButton } from "@/components/sign-out-button";
+import { EditNameForm } from "./edit-name-form";
 
 function initials(name: string) {
   return name
@@ -63,11 +64,9 @@ export default async function ProfilePage() {
             </div>
           </div>
 
+          <EditNameForm defaultName={fullName ?? ""} />
+
           <dl className="divide-y rounded-lg border text-sm">
-            <div className="flex items-baseline justify-between gap-4 px-4 py-3">
-              <dt className="text-muted-foreground">Name</dt>
-              <dd className="truncate font-medium">{fullName ?? "—"}</dd>
-            </div>
             <div className="flex items-baseline justify-between gap-4 px-4 py-3">
               <dt className="text-muted-foreground">Email</dt>
               <dd className="truncate font-medium">{email ?? "—"}</dd>
