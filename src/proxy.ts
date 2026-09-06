@@ -6,12 +6,12 @@ const REQUIRED_ENV_VARS = [
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
 ] as const;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const missing = REQUIRED_ENV_VARS.filter((name) => !process.env[name]);
 
   if (missing.length > 0) {
     console.error(
-      `[middleware] Missing required env var(s): ${missing.join(", ")}. Skipping Supabase session refresh.`
+      `[proxy] Missing required env var(s): ${missing.join(", ")}. Skipping Supabase session refresh.`
     );
     return NextResponse.next({ request });
   }
