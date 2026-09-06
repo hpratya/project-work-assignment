@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getProfile } from "@/lib/supabase/profile";
+import { SignOutButton } from "@/components/sign-out-button";
 
 export default async function Home() {
   const profile = await getProfile();
@@ -31,16 +32,15 @@ export default async function Home() {
                 >
                   Profile
                 </Link>
-                <form action="/auth/signout" method="post">
-                  <Button type="submit" variant="outline" size="sm">
-                    Sign out
-                  </Button>
-                </form>
+                <SignOutButton
+                  fullName={profile.full_name}
+                  email={profile.email}
+                />
               </>
             ) : (
               <Link
                 href="/login"
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                className={cn(buttonVariants({ size: "sm" }))}
               >
                 Sign in
               </Link>

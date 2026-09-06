@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -8,9 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/lib/supabase/profile";
+import { SignOutButton } from "@/components/sign-out-button";
 
 function initials(name: string) {
   return name
@@ -96,11 +96,13 @@ export default async function ProfilePage() {
             >
               Back to home
             </Link>
-            <form action="/auth/signout" method="post" className="flex-1">
-              <Button type="submit" className="w-full">
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton
+              fullName={fullName}
+              email={email}
+              size="default"
+              fullWidth
+              className="flex-1"
+            />
           </div>
         </CardContent>
       </Card>
